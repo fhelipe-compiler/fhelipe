@@ -1,0 +1,7 @@
+out/*
+tensor_graphs
+fheapps/*/**
+!fheapps/**/*.py
+!fheapps/*/.gitignore
+dist/*/**
+*.egg-info

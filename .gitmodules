@@ -1,0 +1,4 @@
+[submodule "backend/aws-cppwrapper-lattigo"]
+	path = backend/aws-cppwrapper-lattigo
+	url = git@github.com:n-samar/aws-cppwrapper-lattigo.git
+    branch = main

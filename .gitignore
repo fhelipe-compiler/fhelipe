@@ -1,0 +1,8 @@
+*.swp
+*.pyc
+.cache
+.testing-tmp
+*.pdf
+*.dot
+results/
+.vscode/

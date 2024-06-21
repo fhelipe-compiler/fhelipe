@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+
+# $lic$
+# Copyright (C) 2023-2024 by Massachusetts Institute of Technology
+#
+# This file is part of the Fhelipe compiler.
+#
+# Fhelipe is free software; you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, version 3.
+#
+# Fhelipe is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import subprocess
+from os import environ
+from pathlib import Path
+
+env = Environment(ENV=environ)
+
+#print(environ)
+
+cpp_version = "c++20"
+
+AddOption(
+    "--release",
+    dest="debug",
+    action="store_false",
+    default=True,
+    help="Build with -O3 and without sanitizers; link statically",
+)
+
+AddOption(
+    "--no-deps-pull",
+    dest="should_pull",
+    action="store_false",
+    default=True,
+    help="Set to prevent pulling dependencies. Useful when hacking directly on dependencies.",
+)
+
+lib_install = Path("lib")
+
+###############################################################################
+# Google libraries
+###############################################################################
+
+def google_libs():
+    lib_repos = (
+        ("googletest", "https://github.com/google/googletest", "v1.13.0"),
+        ("gflags", "https://github.com/gflags/gflags", "v2.2.2"),
+        ("glog", "https://github.com/google/glog", "v0.6.0")
+    )
+    libs = []
+    for lib, url, tag in lib_repos:
+        root = lib_install / lib
+        build = root / "build"
+        cmd = env.Command(
+            source=libs, # Build them in order
+            target=str(root),
+            action=[
+                f"rm -rf {root}",
+                f"git clone --depth 1 --branch {tag} {url} {root}",
+                (
+                    f"cmake -B {build} "
+                    f"-S {root} "
+                    "-DBUILD_SHARED_LIBS=OFF "
+                    "-DWITH_UNWIND=OFF "
+                    "-DGFLAGS_NAMESPACE=google "
+                    f"-DCMAKE_INSTALL_PREFIX={lib_install}"
+                ),
+                f"make -C {build} install"
+            ]
+        )
+        libs.append(cmd)
+    return env.AlwaysBuild(libs)
+
+env.Alias("lib", google_libs())
+
+###############################################################################
+# Lattigo Wrapper
+###############################################################################
+
+lattigo_root = Path("aws-cppwrapper-lattigo")
+
+def no_deps_flag():
+    return "--no-deps-pull" if not GetOption("should_pull") else ""
+
+
+def lattigo_wrapper():
+    lattigo_build = lattigo_root / "build"
+    lattigo = env.Command(
+        source=[],
+        target=str(lattigo_build),
+        action=[
+            f"echo 'No pull!'"
+            if not GetOption("should_pull")
+            else f"git submodule update --init --recursive",
+            f"cmake {lattigo_root} -B{lattigo_build} -GNinja "
+            f"-DCMAKE_INSTALL_PREFIX={lib_install}",
+            f"ninja -C{lattigo_build} -v install",
+        ],
+    )
+    return env.AlwaysBuild(lattigo)
+
+
+env.Alias("deps", [lattigo_wrapper()])
+
+
+###############################################################################
+# C++ Config
+###############################################################################
+
+raw_src = Path("src")
+
+if "CXX" in environ:
+    env["CXX"] = environ["CXX"]
+else:
+    env["CXX"] = 'clang++-15'
+
+env.Append(CXXFLAGS=["-Werror", f"-std={cpp_version}", "-Wall"])
+# FML: https://stackoverflow.com/questions/35116327/when-g-static-link-pthread-cause-segmentation-fault-why
+env.Append(
+    LINKFLAGS=[
+        "-pthread",
+        "-lrt",
+        "-Wl,--whole-archive",
+        "-lpthread",
+        "-Wl,--no-whole-archive",
+    ]
+)
+
+if GetOption("debug"):
+    env.Append(
+        CXXFLAGS=[
+            "-O1",
+            "-fsanitize=address",
+            "-fno-omit-frame-pointer",
+            "-g",
+            "-ggdb",
+        ]
+    )
+    env.Append(LINKFLAGS=["-fsanitize=address"])
+else:
+    env.Append(CXXFLAGS="-O3")
+    env.Append(LINKFLAGS=["-static"])
+
+
+env.Append(
+    LIBPATH=[
+        lib_install / "lib",
+    ]
+)
+env.Append(LIBPATH=environ.get("LIBRARY_PATH", "").split(":"))
+
+env.Append(LIBS=["glog", "gtest_main", "gtest", "gflags"])
+env.Append(
+    LIBS=[
+        "libaws-lattigo-cpp",
+        "liblatticpp_gowrapper",
+        "liblattigo",
+        "libdl",
+    ]
+)
+
+env.Append(
+    CPPPATH=[
+        "src/include",
+        "src",
+        raw_src,
+        lib_install / "include",
+    ]
+)
+
+env.Tool("compilation_db")
+cdb = env.CompilationDatabase()
+Alias("cdb", cdb)
+
+
+###############################################################################
+# C++ Targets
+###############################################################################
+
+
+def glob(root, pattern):
+    # Falling back to `env.Glob` to ensure VariantDirs are handled properly
+    return env.Glob(str(root / pattern))
+
+
+def glob_r(root, pattern, result=None):
+    if result is None:
+        result = []
+
+    result.extend(glob(root, pattern))
+
+    subdirs = (d for d in glob(root, "*") if d.isdir())
+    for d in subdirs:
+        glob_r(Path(d.path), pattern, result=result)
+
+    return result
+
+
+def program(name, sources):
+    program = env.Program(str(root / name), sources)
+    env.Alias(name, program)
+    env.Alias("all", program)
+
+
+if GetOption("debug"):
+    root = Path("build")
+else:
+    root = Path("release")
+
+src = root / "src"
+env.VariantDir(str(src), str(raw_src), duplicate=False)
+test_cc = glob_r(src / "test", "*.cc")
+target_cc = glob_r(src / "targets", "*.cc")
+src_cc = glob_r(src, "*.cc")
+src_cc = list(set(src_cc) - set(test_cc) - set(target_cc))
+
+
+program("tests", [src_cc, test_cc])
+
+for t_cc in target_cc:
+    t = Path(t_cc.path).stem
+    program(t, [t_cc, src_cc])
+
+env.Default("all")

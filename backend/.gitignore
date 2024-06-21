@@ -1,0 +1,7 @@
+.sconsign.dblite
+.vscode
+compile_commands.json
+*.o
+build
+release
+lib
