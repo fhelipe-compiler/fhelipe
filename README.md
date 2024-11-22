@@ -15,12 +15,20 @@ For more details, check out the [Fhelipe paper].
 2. Initialize submodules: `git submodule update --init --recursive`
 
 ## Run in Docker
-The easiest way to run Fhelipe is in [Docker]:
+The easiest way to run Fhelipe is in [Docker].
+On an x86 machine:
 
 1. Build the Fhelipe Docker image: `docker build . --tag fhelipe`
 2. Run it in a container: `docker run -ti fhelipe:latest`
 
 That's all! You don't need to install anything manually.
+
+Unfortunately, this fails on non-x86 machines because a few dependencies are x86-only.
+On Apple Silicon, you might be able to get this work using my [pre-built x86 image] and [Rosetta],
+but we don't officially support this and we won't be able to help with troubleshooting.
+
+[pre-built x86 image]: https://people.csail.mit.edu/alexalex/fhelipe_docker.tar.gz
+[Rosetta]: https://support.apple.com/en-us/102527
 
 ## Manual install
 If you want to run Fhelipe locally (without Docker), the process is a bit more involved.
@@ -32,7 +40,7 @@ In our setup, we use:
 - Go 1.19
 - CMake 3.21
 - ninja 1.7.2
-- Python 3.8
+- Python 3.10
 
 On Ubuntu 22.04, you can install most of this using
 ```bash
