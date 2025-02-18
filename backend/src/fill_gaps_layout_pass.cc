@@ -134,7 +134,7 @@ TensorLayout FillGapsLayoutPass::GetTResizeDimsCOutputLayout(
     }
   }
 
-  return FillGaps({output_shape, layout_bits});
+  return {output_shape, layout_bits};
 }
 
 TensorLayout FillGapsLayoutPass::GetTReduceDimCOutputLayout(
@@ -169,38 +169,39 @@ TensorLayout FillGapsLayoutPass::GetTReorderDimsCOutputLayout(
 TensorLayout FillGapsLayoutPass::StaticGetOutputLayout(
     const std::shared_ptr<Node<TOpEmbrio>>& embrio,
     const TensorLayout& input_layout) {
+  TensorLayout output_layout = input_layout;
   if (const auto* t_reorder_dim_c =
           dynamic_cast<const TReorderDimsCEmbrio*>(&embrio->Value())) {
-    return FillGapsLayoutPass::GetTReorderDimsCOutputLayout(
+    output_layout = FillGapsLayoutPass::GetTReorderDimsCOutputLayout(
         input_layout, t_reorder_dim_c->DimensionOrder());
   }
   if (const auto* t_replicate_dim_c =
           dynamic_cast<const TReplicateDimCEmbrio*>(&embrio->Value())) {
-    return FillGapsLayoutPass::GetTReplicateDimCOutputLayout(
+    output_layout = FillGapsLayoutPass::GetTReplicateDimCOutputLayout(
         input_layout, t_replicate_dim_c->DimensionToReplicate(),
         t_replicate_dim_c->ReplicationMultiple());
   }
   if (const auto* t_reduce_dim_c =
           dynamic_cast<const TReduceDimCEmbrio*>(&embrio->Value())) {
-    return FillGapsLayoutPass::GetTReduceDimCOutputLayout(
+    output_layout = FillGapsLayoutPass::GetTReduceDimCOutputLayout(
         input_layout, t_reduce_dim_c->DimensionToReduce());
   }
   if (const auto* t_stride_c =
           dynamic_cast<const TStrideCEmbrio*>(&embrio->Value())) {
-    return FillGapsLayoutPass::GetTStrideCOutputLayout(input_layout,
+    output_layout = FillGapsLayoutPass::GetTStrideCOutputLayout(input_layout,
                                                        t_stride_c->Strides());
   }
   if (const auto* t_stride_c =
           dynamic_cast<const TMergedStrideCEmbrio*>(&embrio->Value())) {
-    return FillGapsLayoutPass::GetTStrideCOutputLayout(input_layout,
+    output_layout = FillGapsLayoutPass::GetTStrideCOutputLayout(input_layout,
                                                        t_stride_c->Strides());
   }
   if (const auto* t_resize_dim_c =
           dynamic_cast<const TResizeDimCEmbrio*>(&embrio->Value())) {
-    return FillGapsLayoutPass::GetTResizeDimsCOutputLayout(
+    output_layout = FillGapsLayoutPass::GetTResizeDimsCOutputLayout(
         input_layout, embrio->Value().OutputShape());
   }
-  return input_layout;
+  return FillGaps(output_layout);
 }
 
 namespace {

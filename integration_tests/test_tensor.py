@@ -21,21 +21,38 @@ from .integration_test import IntegrationTest
 
 
 class TestFFT(IntegrationTest):
+    atol = 1e-3
+    rtol = 1e-6
+
     make_app = FFT
 
-    def test_default(self):
+    def test_frontend(self):
         self._test_frontend()
+
+    def test_full(self):
+        self._test()
 
 
 class TestMTTKRP(IntegrationTest):
+    atol = 1e-4
+    rtol = 1e-6
     make_app = MTTKRP
 
-    def test_default(self):
+    def test_frontend(self):
         self._test_frontend()
+
+    def test_full(self):
+        self._test()
 
 
 class TestTTM(IntegrationTest):
+    atol = 1e-4
+    rtol = 1e-6
+
     make_app = TTM
 
-    def test_default(self):
+    def test_frontend(self):
         self._test_frontend()
+
+    def test_full(self):
+        self._test()
