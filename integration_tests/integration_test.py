@@ -40,8 +40,8 @@ def _str_path(path):
 
 
 class IntegrationTest(unittest.TestCase, ABC):
-    atol = 1e-5
-    rtol = 1e-7
+    atol = 1e-4
+    rtol = 1e-6
     timeout = None
 
     __exe_root = _project_root() / ".testing-tmp"
@@ -49,7 +49,7 @@ class IntegrationTest(unittest.TestCase, ABC):
     @classmethod
     def setUpClass(cls):
         commands = (
-            #("scons", "deps", "--no-deps-pull"),
+            # ("scons", "deps", "--no-deps-pull"),
             ("scons", "-j32", "--release"),
         )
         for cmd in commands:

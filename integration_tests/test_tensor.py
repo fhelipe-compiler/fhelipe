@@ -22,8 +22,6 @@ from .integration_test import IntegrationTest
 
 class TestFFT(IntegrationTest):
     atol = 1e-3
-    rtol = 1e-6
-
     make_app = FFT
 
     def test_frontend(self):
@@ -34,8 +32,6 @@ class TestFFT(IntegrationTest):
 
 
 class TestMTTKRP(IntegrationTest):
-    atol = 1e-4
-    rtol = 1e-6
     make_app = MTTKRP
 
     def test_frontend(self):
@@ -46,9 +42,6 @@ class TestMTTKRP(IntegrationTest):
 
 
 class TestTTM(IntegrationTest):
-    atol = 1e-4
-    rtol = 1e-6
-
     make_app = TTM
 
     def test_frontend(self):

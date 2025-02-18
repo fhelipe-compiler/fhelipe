@@ -19,3 +19,4 @@ from .conv import Conv
 from .fc import Fc
 from .max_pool import MaxPool, max_pool2d
 from .relu import Relu
+from .matmul import Matmul

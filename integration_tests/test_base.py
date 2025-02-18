@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
-from fheapps.base import Conv, Fc, MaxPool
+from fheapps.base import Conv, Fc, MaxPool, Matmul
 
 from .integration_test import IntegrationTest
 
@@ -51,3 +51,13 @@ class TestMaxPool(IntegrationTest):
 
     def test_normal(self):
         self._test(c=2, w=4, r=3)
+
+
+class TestMatMul(IntegrationTest):
+    make_app = Matmul
+
+    def test_small(self):
+        self._test(n=16)
+
+    def test_default(self):
+        self._test()
