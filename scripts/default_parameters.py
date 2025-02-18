@@ -71,7 +71,7 @@ default_chet_flags = [
 ]
 
 lola_mnist_lattigo_parameters = LattigoParameters(
-    default_bootstrapping_precision, 35, 11
+    default_bootstrapping_precision, 35, 16
 )
 
 ttm_mttkrp_lattigo_parameters = LattigoParameters(
@@ -390,4 +390,7 @@ benchmark_dict = {
     "chet_mttkrp": chet_mttkrp,
     "fhelipe_aespa_resnet": fhelipe_aespa_resnet,
     "condor_fhelipe_aespa_resnet": condor_fhelipe_aespa_resnet,
+    "manual_resnet": manual_resnet,
+    "manual_rnn": manual_rnn,
+    "manual_logreg": manual_logreg,
 }

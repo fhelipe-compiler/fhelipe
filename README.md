@@ -8,7 +8,7 @@ The Fhelipe FHE compiler addresses this:
 Fhelipe exposes a easy-to-use tensor programming interface, reducing code size by 10×–48×,
 and is the first compiler to match or exceed the performance of large hand-optimized FHE applications, like deep neural networks.
 
-For more details, check out the [Fhelipe paper].
+For more details, check out the [Fhelipe paper][paper].
 
 ## Get the repository
 1. Clone the repository: `git clone git@github.com:fhelipe-compiler/fhelipe.git`
@@ -99,12 +99,31 @@ Here's an example for running ResNet-20:
 You can also run all tests (as done by continuous integration) using
 `./scripts/run_ci_tests.sh`.
 
-[Fhelipe paper]: https://dl.acm.org/doi/10.1145/3656382
+## Results
+Up-to-date performance of Fhelipe on CraterLake against CHET and Manual baselines:
+
+|             | Fhelipe [ms] | Manual [ms] | CHET [ms] | vs Manual | vs CHET |
+|-------------|--------------|-------------|-----------|-----------|---------|
+| resnet      | 243.7        | 247.0       | 591.8     | 1.0×      | 2.4×    |
+| rnn         | 463.1        | 489.7       | 2974.1    | 1.1×      | 6.4×    |
+| logreg      | 143.6        | 1741.2      | 5163.6    | 12.1×     | 36.0×   |
+| LoLa-MNIST  | 0.3          | 0.9         | 88.9      | 3.4×      | 318.8×  |
+| **gmean**   |              |             |           | 2.6×      | 20.6×   |
+| FFT         | 241.0        |             | 257.5     |           | 1.1×    |
+| TTM         | 30.3         |             | 8105.0    |           | 267.9×  |
+| MTTKRP      | 64.8         |             | 8105.6    |           | 125.1×  |
+| **gmean**   |              |             |           |           | 33.0×   |
+
+Differences from Table.4 in the [paper] are due to:
+- [Fix][layouts-fix] of a layouts bug affecting TTM and MTTKRP
+- Various small performance improvements
+
+
+[paper]: https://dl.acm.org/doi/10.1145/3656382
 
 [gtest]: https://github.com/google/googletest
 [gflags]: https://github.com/gflags/gflags
 [glog]: https://github.com/google/glog
 
 [docker]: https://docs.docker.com/manuals/
-[rust]: https://www.rust-lang.org/tools/install
-
+[layouts-fix]: https://github.com/fhelipe-compiler/fhelipe/commit/8329cda980ad5a3307727adf63e0db6f15c215b8
